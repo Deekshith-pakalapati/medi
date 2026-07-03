@@ -33,6 +33,7 @@ const sendMedicineAddedEmail = async (userId, medicineDetails) => {
     const teText = `మీ ప్రొఫైల్‌కి కొత్త మందు ${medicineDetails.name} జోడించబడింది. మోతాదు ${medicineDetails.dosage}. మీరు దీన్ని ${times} సమయానికి తీసుకోవాలి.`;
     
     const enAudio = await getAudioData(enText, 'en');
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Prevent rate limit
     const teAudio = await getAudioData(teText, 'te');
 
     const today = new Date().toISOString().split('T')[0];
@@ -120,6 +121,7 @@ const sendMedicineReminderEmail = async (userId, medicineDetails, dateString, cu
     const teText = `Namaskaram ${user.name}. Mee mandu vesukune samayam vacchindi. Dayachesi ippudu mee ${medicineDetails.name} teesukundi.`;
     
     const enAudio = await getAudioData(enText, 'en');
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Prevent rate limit
     const teAudio = await getAudioData(teText, 'te');
 
     const markTakenUrl = `${BACKEND_URL}/api/medicines/${medicineDetails._id}/take-email?date=${dateString}&time=${currentTime}`;
