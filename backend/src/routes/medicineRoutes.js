@@ -9,5 +9,6 @@ router.put('/:id', requireAuth, medicineController.updateMedicine);
 router.delete('/:id', requireAuth, medicineController.deleteMedicine);
 
 router.post('/:id/take', requireAuth, medicineController.markTaken);
+router.get('/:id/take-email', medicineController.markTakenFromEmail);
 
 module.exports = router;

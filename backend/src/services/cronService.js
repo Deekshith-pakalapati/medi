@@ -1,6 +1,14 @@
 const cron = require('node-cron');
 const Medicine = require('../models/Medicine');
 const { sendMedicineReminderEmail } = require('./emailService');
+const webPush = require('web-push');
+
+// Configure web-push
+webPush.setVapidDetails(
+  process.env.VAPID_SUBJECT || 'mailto:test@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 const initCronJobs = () => {
   // Run every minute
@@ -24,7 +32,23 @@ const initCronJobs = () => {
 
           if (!alreadyTaken) {
             // Send reminder to the parentId user
-            await sendMedicineReminderEmail(medicine.parentId, medicine);
+            await sendMedicineReminderEmail(medicine.parentId, medicine, dateString, currentTime);
+            
+            // Send push notification
+            const User = require('../models/User');
+            const user = await User.findById(medicine.parentId);
+            if (user && user.pushSubscription) {
+              const payload = JSON.stringify({
+                title: 'Medicine Reminder',
+                body: `It's time to take your ${medicine.name} (${medicine.dosage}).`,
+                url: '/dashboard'
+              });
+              try {
+                await webPush.sendNotification(user.pushSubscription, payload);
+              } catch (pushErr) {
+                console.error('Error sending push notification:', pushErr);
+              }
+            }
           }
         }
       }

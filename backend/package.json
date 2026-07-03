@@ -12,12 +12,14 @@
   "description": "",
   "dependencies": {
     "@clerk/clerk-sdk-node": "^4.13.23",
+    "@getbrevo/brevo": "^5.0.4",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "google-tts-api": "^2.0.2",
     "groq-sdk": "^1.2.1",
     "mongoose": "^9.7.0",
     "node-cron": "^4.5.0",
-    "resend": "^6.16.0"
+    "web-push": "^3.6.7"
   }
 }

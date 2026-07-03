@@ -12,7 +12,8 @@ import AuthLayout from './components/AuthLayout';
 import Chatbot from './components/Chatbot';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
-import { useReminders } from './hooks/useReminders';
+import GlobalAlertBanner from './components/GlobalAlertBanner';
+import { usePushNotifications } from './hooks/usePushNotifications';
 import SplashLoader from './components/SplashLoader';
 import { Loader2 } from 'lucide-react';
 
@@ -35,7 +36,7 @@ const ProtectedRoute = ({ children }) => {
 function AppContent() {
   const { isLoaded } = useUser();
   const [showSplash, setShowSplash] = useState(true);
-  useReminders();
+  usePushNotifications();
 
   useEffect(() => {
     // 2.5s visible + 0.5s exit animation = 3s total duration
@@ -49,6 +50,7 @@ function AppContent() {
 
   return (
     <>
+      <GlobalAlertBanner />
       <AnimatePresence mode="wait">
         {isAppLoading && <SplashLoader key="splash" />}
       </AnimatePresence>

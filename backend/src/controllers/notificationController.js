@@ -37,8 +37,27 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
+const subscribeToPush = async (req, res) => {
+  try {
+    const clerkId = req.auth.userId;
+    const subscription = req.body;
+    
+    const user = await User.findOneAndUpdate(
+      { clerkId },
+      { pushSubscription: subscription },
+      { new: true }
+    );
+    
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.status(200).json({ message: 'Push subscription saved' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getNotifications,
   markAsRead,
-  markAllAsRead
+  markAllAsRead,
+  subscribeToPush
 };

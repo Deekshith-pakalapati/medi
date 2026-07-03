@@ -11,7 +11,8 @@ const userSchema = new mongoose.Schema({
   preferences: {
     voiceLanguage: { type: String, enum: ['English', 'Telugu', 'Both'], default: 'English' },
     theme: { type: String, enum: ['Light', 'Dark'], default: 'Light' }
-  }
+  },
+  pushSubscription: { type: mongoose.Schema.Types.Mixed, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

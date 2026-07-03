@@ -21,112 +21,6 @@ const Dashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState('');
 
-  // Alarm state
-  const [activeAlarm, setActiveAlarm] = useState(null); // { medicine, count, time }
-  const activeAlarmRef = useRef(activeAlarm);
-  activeAlarmRef.current = activeAlarm; // sync for interval
-
-  const playVoiceAlert = (enText, teText) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // clear previous
-      
-      const enUtterance = new SpeechSynthesisUtterance(enText);
-      enUtterance.lang = 'en-US';
-      enUtterance.rate = 0.9;
-      enUtterance.pitch = 1.1;
-
-      const teUtterance = new SpeechSynthesisUtterance(teText);
-      teUtterance.lang = 'te-IN';
-      teUtterance.rate = 0.9;
-      teUtterance.pitch = 1.1;
-
-      // Play English immediately after Telugu finishes
-      teUtterance.onend = () => {
-        window.speechSynthesis.speak(enUtterance);
-      };
-
-      window.speechSynthesis.speak(teUtterance);
-    }
-  };
-
-  useEffect(() => {
-    if (medicines.length === 0) return;
-
-    const checkAlarms = () => {
-      const now = new Date();
-      const todayDate = now.toISOString().split('T')[0];
-      const currentHHMM = now.toTimeString().slice(0, 5); // "HH:MM"
-
-      // Handle ongoing alarm
-      const currentAlarm = activeAlarmRef.current;
-      if (currentAlarm) {
-        // Voice plays only once now, just wait for user to dismiss
-        return; 
-      }
-
-      // Scan for new alarms
-      for (const med of medicines) {
-         if (med.reminderTimes && med.reminderTimes.includes(currentHHMM)) {
-            const alreadyTaken = (med.takenLogs || []).some(log => log.date === todayDate && log.time === currentHHMM);
-            if (!alreadyTaken) {
-               setActiveAlarm({ medicine: med, count: 1, time: currentHHMM });
-               playVoiceAlert(
-                 `It's time to take your ${med.name}. Please confirm you have taken it.`,
-                 `మీ ${med.name} వేసుకునే సమయం అయింది. దయచేసి నిర్ధారించండి.`
-               );
-               break; // only trigger one alarm at a time
-            }
-         }
-      }
-    };
-
-    // Check exactly on the minute mark
-    const now = new Date();
-    const delayToNextMinute = (60 - now.getSeconds()) * 1000;
-    
-    // Check immediately on mount just in case
-    checkAlarms();
-
-    const timeoutId = setTimeout(() => {
-      checkAlarms();
-      setInterval(checkAlarms, 60000);
-    }, delayToNextMinute);
-
-    return () => {
-      clearTimeout(timeoutId);
-      // clean up any interval if needed
-    };
-  }, [medicines]);
-
-  const handleMarkTaken = async () => {
-    if (!activeAlarm) return;
-    try {
-      const token = await getToken();
-      const todayDate = new Date().toISOString().split('T')[0];
-      
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/medicines/${activeAlarm.medicine._id}/take`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-         body: JSON.stringify({ date: todayDate, time: activeAlarm.time })
-      });
-      if (res.ok) {
-         // Stop alarm
-         setActiveAlarm(null);
-         window.speechSynthesis.cancel();
-         
-         // update local state to show it's taken
-         setMedicines(prev => prev.map(m => {
-            if (m._id === activeAlarm.medicine._id) {
-               return { ...m, takenLogs: [...(m.takenLogs||[]), { date: todayDate, time: activeAlarm.time }] };
-            }
-            return m;
-         }));
-      }
-    } catch (e) {
-      console.error('Failed to mark taken', e);
-    }
-  };
-
   const handleDeleteMedicine = async (id) => {
     try {
       const token = await getToken();
@@ -138,6 +32,7 @@ const Dashboard = () => {
         setMedicines(prev => prev.filter(m => m._id !== id));
         setDeleteMessage('Medicine deleted successfully');
         setTimeout(() => setDeleteMessage(''), 3000);
+        window.dispatchEvent(new Event('refreshMedicines'));
       }
     } catch (e) {
       console.error('Failed to delete medicine', e);
@@ -268,30 +163,6 @@ const Dashboard = () => {
     <div className="min-h-screen flex relative overflow-hidden bg-white dark:bg-[#000000] transition-colors duration-300">
       {/* Background glow */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-
-      {/* Voice Alarm Modal Overlay */}
-      <AnimatePresence>
-        {activeAlarm && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xl" />
-            <motion.div initial={{ scale: 0.9, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} className="relative bg-white dark:bg-[#111] rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border border-indigo-500/30">
-              <div className="w-20 h-20 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/30 animate-pulse">
-                <Bell className="w-10 h-10 text-white" />
-              </div>
-              <h2 className="text-3xl font-black text-[#111] dark:text-white mb-2">Time for Medicine!</h2>
-              <p className="text-xl font-bold text-indigo-500 mb-6">{activeAlarm.medicine.name} • {activeAlarm.medicine.dosage}</p>
-              
-              <button onClick={handleMarkTaken} className="w-full py-4 rounded-xl text-white font-bold text-lg bg-green-500 hover:bg-green-600 transition-colors shadow-lg shadow-green-500/30 mb-4">
-                Mark as Taken
-              </button>
-              
-              <p className="text-sm font-medium text-[#111]/50 dark:text-white/50">
-                Please mark as taken to dismiss this alarm.
-              </p>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Sidebar (Desktop) */}
       <aside className="w-64 hidden md:flex flex-col border-r border-black/5 dark:border-white/5 glass-panel z-10 shrink-0">
@@ -593,7 +464,10 @@ const Dashboard = () => {
       <AddMedicineModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onAdd={(newMed) => setMedicines(prev => [newMed, ...prev])}
+        onAdd={(newMed) => {
+          setMedicines(prev => [newMed, ...prev]);
+          window.dispatchEvent(new Event('refreshMedicines'));
+        }}
       />
     </div>
   );
