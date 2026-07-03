@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useReminders } from '../hooks/useReminders';
 import { Bell, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,57 +6,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 const GlobalAlertBanner = () => {
   const { activeAlarm, handleMarkTaken, dismissAlarm } = useReminders();
 
-  const audioRef = useRef(null);
-
   useEffect(() => {
     if (activeAlarm) {
-      const playVoiceAlert = async () => {
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        
-        const med = activeAlarm.medicine;
-        const textEnglish = `It is time to take your medicine. Please take ${med.name} now.`;
-        const textTelugu = `మీ ${med.name} వేసుకునే సమయం అయింది. దయచేసి నిర్ధారించండి.`;
-
-        try {
-          const apiUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+      const playVoiceAlert = () => {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel(); // clear previous
           
-          // Play Telugu first using backend proxy
-          const teUrl = `${apiUrl}/api/tts?lang=te&text=${encodeURIComponent(textTelugu)}`;
-          const teAudio = new Audio(teUrl);
-          audioRef.current = teAudio;
-          
-          await new Promise(resolve => {
-            teAudio.onended = resolve;
-            teAudio.onerror = resolve;
-            teAudio.play().catch(resolve);
-          });
+          const med = activeAlarm.medicine;
+          const textEnglish = `It is time to take your medicine. Please take ${med.name} now.`;
 
-          // Wait 2 seconds
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          const uEn = new SpeechSynthesisUtterance(textEnglish);
+          uEn.lang = 'en-US';
+          uEn.rate = 0.9;
+          uEn.pitch = 1.1;
 
           // Play English
-          const enUrl = `${apiUrl}/api/tts?lang=en&text=${encodeURIComponent(textEnglish)}`;
-          const enAudio = new Audio(enUrl);
-          audioRef.current = enAudio;
-          
-          await new Promise(resolve => {
-            enAudio.onended = resolve;
-            enAudio.onerror = resolve;
-            enAudio.play().catch(resolve);
-          });
-        } catch (e) {
-          console.error("Failed to play audio alert", e);
+          window.speechSynthesis.speak(uEn);
         }
       };
 
       playVoiceAlert();
     } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      window.speechSynthesis?.cancel();
     }
   }, [activeAlarm]);
 
