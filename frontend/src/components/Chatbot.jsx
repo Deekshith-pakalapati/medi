@@ -51,7 +51,6 @@ const Chatbot = () => {
     loadHistory();
     return () => { mounted = false; };
   }, [getToken]);
-
   const audioRef = useRef(null);
 
   const speak = (text) => {

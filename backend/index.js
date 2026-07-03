@@ -39,11 +39,18 @@ app.get('/api/tts', async (req, res) => {
   try {
     const { text, lang } = req.query;
     if (!text || !lang) return res.status(400).send('Missing text or lang');
+    
+    // Add a small delay if it's Telugu to prevent Render rate limits from rapid requests
+    if (lang === 'te') {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
     const base64 = await googleTTS.getAudioBase64(text, { lang, slow: false });
     const audioBuffer = Buffer.from(base64, 'base64');
     res.set({
       'Content-Type': 'audio/mp3',
-      'Content-Length': audioBuffer.length
+      'Content-Length': audioBuffer.length,
+      'Access-Control-Allow-Origin': '*'
     });
     res.end(audioBuffer);
   } catch (error) {

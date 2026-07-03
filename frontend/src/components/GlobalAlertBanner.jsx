@@ -21,6 +21,7 @@ const GlobalAlertBanner = () => {
 
         try {
           const apiUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+          
           // Play Telugu first using backend proxy
           const teUrl = `${apiUrl}/api/tts?lang=te&text=${encodeURIComponent(textTelugu)}`;
           const teAudio = new Audio(teUrl);
