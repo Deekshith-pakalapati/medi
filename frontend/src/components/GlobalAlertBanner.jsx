@@ -20,8 +20,9 @@ const GlobalAlertBanner = () => {
         const textTelugu = `మీ ${med.name} వేసుకునే సమయం అయింది. దయచేసి నిర్ధారించండి.`;
 
         try {
-          // Play Telugu first using Google Translate TTS
-          const teUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=te&client=tw-ob&q=${encodeURIComponent(textTelugu)}`;
+          const apiUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+          // Play Telugu first using backend proxy
+          const teUrl = `${apiUrl}/api/tts?lang=te&text=${encodeURIComponent(textTelugu)}`;
           const teAudio = new Audio(teUrl);
           audioRef.current = teAudio;
           
@@ -35,7 +36,7 @@ const GlobalAlertBanner = () => {
           await new Promise(resolve => setTimeout(resolve, 2000));
 
           // Play English
-          const enUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(textEnglish)}`;
+          const enUrl = `${apiUrl}/api/tts?lang=en&text=${encodeURIComponent(textEnglish)}`;
           const enAudio = new Audio(enUrl);
           audioRef.current = enAudio;
           

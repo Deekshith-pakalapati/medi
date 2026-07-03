@@ -34,6 +34,24 @@ app.get('/', (req, res) => {
   res.send('MediCare Reminder API is running');
 });
 
+const googleTTS = require('google-tts-api');
+app.get('/api/tts', async (req, res) => {
+  try {
+    const { text, lang } = req.query;
+    if (!text || !lang) return res.status(400).send('Missing text or lang');
+    const base64 = await googleTTS.getAudioBase64(text, { lang, slow: false });
+    const audioBuffer = Buffer.from(base64, 'base64');
+    res.set({
+      'Content-Type': 'audio/mp3',
+      'Content-Length': audioBuffer.length
+    });
+    res.end(audioBuffer);
+  } catch (error) {
+    console.error('TTS error:', error);
+    res.status(500).send('TTS Error');
+  }
+});
+
 // Import Routes
 const userRoutes = require('./src/routes/userRoutes');
 const medicineRoutes = require('./src/routes/medicineRoutes');

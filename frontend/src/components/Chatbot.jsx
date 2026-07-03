@@ -52,13 +52,22 @@ const Chatbot = () => {
     return () => { mounted = false; };
   }, [getToken]);
 
+  const audioRef = useRef(null);
+
   const speak = (text) => {
     if (isMuted) return;
-    const synth = window.speechSynthesis;
-    const utterance = new SpeechSynthesisUtterance(text);
     const isTelugu = /[\u0C00-\u0C7F]/.test(text);
-    utterance.lang = isTelugu ? 'te-IN' : 'en-US';
-    synth.speak(utterance);
+    const lang = isTelugu ? 'te' : 'en';
+    
+    if (audioRef.current) {
+        audioRef.current.pause();
+    }
+    
+    const apiUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+    const url = `${apiUrl}/api/tts?lang=${lang}&text=${encodeURIComponent(text)}`;
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.play().catch(e => console.error("Audio playback failed", e));
   };
 
   const startListening = () => {
@@ -163,7 +172,7 @@ const Chatbot = () => {
                   e.stopPropagation(); 
                   const nextMuted = !isMuted;
                   setIsMuted(nextMuted); 
-                  if (nextMuted) window.speechSynthesis.cancel();
+                  if (nextMuted && audioRef.current) audioRef.current.pause();
                 }} className="hover:bg-black/5 dark:hover:bg-white/10 p-2 rounded-md transition-colors">
                   {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
                 </button>
