@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Outfit", sans-serif;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-white text-[#111] font-sans antialiased transition-colors duration-300;
+  }
+
+  .dark body {
+    @apply bg-[#000000] text-[#eeeeee];
+  }
+
+  /* Safe area padding for mobile devices with notches */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+  }
+
+  /* Sleek custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-black/10 dark:bg-white/10 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-black/20 dark:bg-white/20;
+  }
+
+  *, *::before, *::after {
+    @apply box-border;
+  }
+
+  /* Fix date/time input colors in dark mode */
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: light;
+  }
+  .dark input[type="date"],
+  .dark input[type="time"] {
+    color-scheme: dark;
+  }
+
+  /* Fix select/option dropdown visibility in both modes */
+  select {
+    background-color: #ffffff;
+    color: #111111;
+  }
+  .dark select {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+  select option {
+    background-color: #ffffff;
+    color: #111111;
+  }
+  .dark select option {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .dark .glass-card {
+    background: rgba(12, 12, 14, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .dark .glass-panel {
+    background: rgba(8, 8, 10, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  .text-gradient {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-[#111] to-[#555] dark:from-[#fff] dark:to-[#aaa];
+  }
+
+  .text-gradient-accent {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500;
+  }
+}
