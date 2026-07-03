@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useReminders } from '../hooks/useReminders';
 import { Bell, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,41 +6,55 @@ import { motion, AnimatePresence } from 'framer-motion';
 const GlobalAlertBanner = () => {
   const { activeAlarm, handleMarkTaken, dismissAlarm } = useReminders();
 
+  const audioRef = useRef(null);
+
   useEffect(() => {
     if (activeAlarm) {
-      const playVoiceAlert = () => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel(); // clear previous
+      const playVoiceAlert = async () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        
+        const med = activeAlarm.medicine;
+        const textEnglish = `It is time to take your medicine. Please take ${med.name} now.`;
+        const textTelugu = `మీ ${med.name} వేసుకునే సమయం అయింది. దయచేసి నిర్ధారించండి.`;
+
+        try {
+          // Play Telugu first using Google Translate TTS
+          const teUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=te&client=tw-ob&q=${encodeURIComponent(textTelugu)}`;
+          const teAudio = new Audio(teUrl);
+          audioRef.current = teAudio;
           
-          const med = activeAlarm.medicine;
-          const textEnglish = `It is time to take your medicine. Please take ${med.name} now.`;
-          const textTelugu = `మీ ${med.name} వేసుకునే సమయం అయింది. దయచేసి నిర్ధారించండి.`;
+          await new Promise(resolve => {
+            teAudio.onended = resolve;
+            teAudio.onerror = resolve;
+            teAudio.play().catch(resolve);
+          });
 
-          const uEn = new SpeechSynthesisUtterance(textEnglish);
-          uEn.lang = 'en-US';
-          uEn.rate = 0.9;
-          uEn.pitch = 1.1;
+          // Wait 2 seconds
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
-          const uTe = new SpeechSynthesisUtterance(textTelugu);
-          uTe.lang = 'te-IN';
-          uTe.rate = 0.9;
-          uTe.pitch = 1.1;
-
-          // Play Telugu first
-          window.speechSynthesis.speak(uTe);
-
-          // Wait 2 seconds after Telugu ends to play English
-          uTe.onend = () => {
-            setTimeout(() => {
-              window.speechSynthesis.speak(uEn);
-            }, 2000);
-          };
+          // Play English
+          const enUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(textEnglish)}`;
+          const enAudio = new Audio(enUrl);
+          audioRef.current = enAudio;
+          
+          await new Promise(resolve => {
+            enAudio.onended = resolve;
+            enAudio.onerror = resolve;
+            enAudio.play().catch(resolve);
+          });
+        } catch (e) {
+          console.error("Failed to play audio alert", e);
         }
       };
 
       playVoiceAlert();
     } else {
-      window.speechSynthesis?.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
     }
   }, [activeAlarm]);
 
